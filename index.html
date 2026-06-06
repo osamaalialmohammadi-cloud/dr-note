@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <title>Dr. Note v6.1 - Master Exam</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #e74c3c; --success: #27ae60; --bg: #f4f7f6; --text: #333; --card: #fff; --divider: #eee; }
+        .dark-mode { --primary: #ff6b6b; --bg: #121212; --text: #e0e0e0; --card: #1e1e1e; --divider: #333; }
+        
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 10px; background-color: var(--bg); color: var(--text); transition: 0.3s; margin: 0; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 600px; margin: 10px auto; background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); padding-bottom: 15px; margin-bottom: 20px; }
+        .top-bar h2 { margin: 0; font-size: 1.8em; color: var(--primary); }
+        .dark-mode .top-bar h2 { color: #fff; }
+        .btn-toggle { background: transparent; border: 1px solid var(--divider); padding: 5px 10px; border-radius: 6px; font-size: 1.2em; cursor: pointer; color: var(--text); }
+        
+        .section-title { background: rgba(231, 76, 60, 0.1); color: var(--accent); padding: 8px 10px; border-radius: 6px; font-size: 0.9em; font-weight: bold; margin-top: 25px; border-left: 4px solid var(--accent); }
+
+        label { font-weight: 600; display: block; margin-top: 15px; font-size: 0.85em; color: var(--text); }
+        .smart-label { color: var(--accent); font-size: 0.8em; margin-top: 5px; }
+        
+        select, input[type="text"], input[type="number"], textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid var(--divider); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 15px; font-family: inherit; transition: 0.2s; }
+        select:focus, input:focus, textarea:focus { border-color: var(--accent); outline: none; background: var(--card); }
+        
+        .flex-row { display: flex; gap: 10px; }
+        .flex-1 { flex: 1; }
+        .flex-2 { flex: 2; }
+
+        .chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .chip-group label { margin: 0; font-weight: normal; }
+        .chip-group input[type="checkbox"] { display: none; }
+        .chip-group span { display: inline-block; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--divider); background: var(--bg); color: var(--text); font-size: 0.85em; cursor: pointer; transition: 0.2s; }
+        .chip-group input[type="checkbox"]:checked + span { background: var(--accent); color: white; border-color: var(--accent); }
+        
+        .dropdown-check-list { display: inline-block; width: 100%; position: relative; margin-top: 5px; }
+        .dropdown-check-list .anchor { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--divider); background: var(--bg); color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; font-size: 15px; }
+        .dropdown-check-list .items { display: none; position: absolute; width: 100%; background: var(--card); border: 1px solid var(--divider); border-top: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 100; max-height: 250px; overflow-y: auto; }
+        .dropdown-check-list .items.visible { display: block; }
+        .dropdown-check-list .items label { display: block; padding: 14px 15px; margin: 0; cursor: pointer; border-bottom: 1px solid var(--divider); font-weight: normal; font-size: 15px; }
+        .dropdown-check-list .items input { margin-right: 12px; transform: scale(1.3); }
+
+        button.action-btn { width: 100%; padding: 15px; margin-top: 25px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-gen { background-color: var(--accent); color: white; }
+        .btn-copy { background-color: var(--success); color: white; display: none; margin-top: 10px; }
+        .btn-clear { background-color: transparent; border: 1px solid #95a5a6; color: #95a5a6; margin-top: 10px; padding: 10px; }
+        
+        .output-box { background: var(--card); border: 2px dashed var(--accent); padding: 15px; margin-top: 20px; border-radius: 8px; display: none; text-align: left; font-family: 'Courier New', monospace; font-size: 13.5px; white-space: pre-wrap; color: var(--text); line-height: 1.6;}
+        .output-box strong { color: var(--accent); font-size: 1.05em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-bar">
+        <h2>🚑 ER Smart Note v6.1</h2>
+        <button class="btn-toggle" onclick="toggleDarkMode()">🌓</button>
+    </div>
+
+    <div class="section-title">1. Patient & Case Type</div>
+    <div class="flex-row" style="margin-top:10px;">
+        <div class="flex-2"><input type="text" id="ptID" placeholder="ID / Patient Name" oninput="saveData()"></div>
+        <div class="flex-1"><input type="number" id="age" placeholder="Age" oninput="saveData()"></div>
+        <div class="flex-1"><select id="gender" onchange="saveData()"><option value="Male">Male</option><option value="Female">Female</option></select></div>
+    </div>
+    
+    <label>Chief Complaint / ER Case (Triggers Smart HPI & Exam):</label>
+    <select id="caseSelect" onchange="updateSmartFields(); saveData()" style="border: 2px solid var(--accent); font-weight: bold;">
+        <option value="abdomen">🤢 Acute Abdomen / GI Upset</option>
+        <option value="chest_pain">🫀 Chest Pain</option>
+        <option value="resp">🫁 Cough / Shortness of Breath (SOB)</option>
+        <option value="limb_trauma">🦴 Limb Trauma / Fall</option>
+        <option value="head_trauma">🧠 Head Trauma / Minor TBI</option>
+        <option value="wound">🔪 Laceration / Soft Tissue Wound</option>
+    </select>
+
+    <div class="section-title">2. Smart HPI (History of Presenting Illness)</div>
+    <div class="flex-row">
+        <div class="flex-1"><label>Duration:</label><input type="text" id="ccDuration" placeholder="e.g. 3 hours, 2 days" oninput="saveData()"></div>
+    </div>
+    
+    <div id="dynamicHPI" onchange="saveData()" oninput="saveData()"></div>
+    
+    <label>Additional HPI Notes (Optional):</label>
+    <textarea id="hpi_extra" rows="1" placeholder="Any extra details not covered above..." oninput="saveData()"></textarea>
+
+    <label>Past History & Allergies:</label>
+    <div class="chip-group" id="pmhGroup" onchange="saveData()">
+        <label><input type="checkbox" value="DM"><span>DM</span></label>
+        <label><input type="checkbox" value="HTN"><span>HTN</span></label>
+        <label><input type="checkbox" value="IHD"><span>IHD</span></label>
+        <label><input type="checkbox" value="Asthma"><span>Asthma</span></label>
+    </div>
+    <div class="chip-group" id="allergyGroup" onchange="saveData()" style="margin-top:5px;">
+        <label><input type="checkbox" id="nkda" value="NKDA" checked><span>✅ NKDA (No Allergies)</span></label>
+        <label><input type="checkbox" value="Penicillin"><span>Penicillin</span></label>
+        <label><input type="checkbox" value="Sulfa"><span>Sulfa</span></label>
+    </div>
+
+    <div class="section-title">3. Smart Objective Exam</div>
+    <div id="dynamicExam" onchange="saveData()" oninput="saveData()"></div>
+
+    <div class="section-title">4. ER Course & Interventions</div>
+    <label>Investigations (Labs / Radiology):</label>
+    <textarea id="xray" rows="2" placeholder="e.g. X-Ray Unremarkable, Labs pending..." oninput="saveData()"></textarea>
+
+    <label>Progression / Meds given in ER:</label>
+    <textarea id="progression" rows="2" placeholder="e.g. Analgesia given, patient feels better..." oninput="saveData()"></textarea>
+
+    <div class="section-title">5. Plan & Disposition</div>
+    <div id="planDropdown" class="dropdown-check-list">
+        <span class="anchor" onclick="toggleDropdown()">Select Standard Plan(s)...</span>
+        <div class="items" id="planItems">
+            <label><input type="checkbox" value="Analgesia / Meds Prescribed" onchange="updateDropdownText(); saveData()" /> 💊 Analgesia / Meds Prescribed</label>
+            <label><input type="checkbox" value="Labs / ECG / Imaging Requested" onchange="updateDropdownText(); saveData()" /> 🔬 Request Labs/Imaging</label>
+            <label><input type="checkbox" value="Discharged home with Return Precautions" onchange="updateDropdownText(); saveData()" /> 🚶 Discharge with Red Flag advice</label>
+            <label><input type="checkbox" value="Referred to Specialty On-call" onchange="updateDropdownText(); saveData()" /> 📞 Refer to Specialty On-call</label>
+            <label><input type="checkbox" value="Admission for further management" onchange="updateDropdownText(); saveData()" /> 🏥 Admission</label>
+        </div>
+    </div>
+    <label>Other / Custom Plan:</label>
+    <textarea id="customPlan" rows="2" placeholder="Type specific medications, specific instructions..." oninput="saveData()"></textarea>
+
+    <button class="action-btn btn-gen" onclick="generateNote()">Generate ER Note 🚀</button>
+    <div id="outputNote" class="output-box"></div>
+    <button class="action-btn btn-copy" id="copyBtn" onclick="copyNote()">Copy Note to System 📋</button>
+    <button class="action-btn btn-clear" onclick="clearForm()">🗑️ Clear Form for Next Patient</button>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log(err)); }); }
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('drnote_theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+}
+if(localStorage.getItem('drnote_theme') === 'dark') document.body.classList.add('dark-mode');
+
+// --- محرك الفحص السريري المتقدم ---
+function updateSmartFields() {
+    const caseType = document.getElementById('caseSelect').value;
+    const hpiContainer = document.getElementById('dynamicHPI');
+    const examContainer = document.getElementById('dynamicExam');
+    
+    let hpiHTML = ``;
+    let examHTML = ``;
+    
+    // 1. Abdomen
+    if (caseType === "abdomen") {
+        hpiHTML = `
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Onset:</label><select id="onset"><option value="gradual">Gradual</option><option value="sudden">Sudden</option></select></div>
+            <div class="flex-1"><label class="smart-label">Character:</label><select id="character"><option value="cramping">Cramping</option><option value="sharp">Sharp</option><option value="dull aching">Dull aching</option></select></div></div>
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Radiation:</label><select id="radiation"><option value="no radiation">None</option><option value="radiating to the back">To Back</option><option value="radiating to the groin">To Groin</option></select></div>
+            <div class="flex-1"><label class="smart-label">Associated (N/V/D):</label><select id="assoc"><option value="associated with nausea and vomiting">Nausea/Vomiting</option><option value="associated with diarrhea">Diarrhea</option><option value="no nausea, vomiting, or diarrhea">None</option></select></div></div>`;
+        
+        examHTML = `
+            <label>Abdominal Exam (Main Finding):</label>
+            <select id="abd_exam">
+                <option value="Abdomen is soft, non-distended, and non-tender globally. No guarding, no rigidity, and no signs of peritonitis. Bilateral flanks are negative for CVA tenderness.">Negative / Normal (Soft, lax, no peritonitis)</option>
+                <option value="Soft abdomen with mild Epigastric tenderness. No guarding or rigidity.">Mild Epigastric Tenderness</option>
+                <option value="Abdomen is tender at the RLQ (McBurney's point). Positive guarding noted.">RLQ Tenderness / Guarding (Appendicitis?)</option>
+                <option value="Abdomen is tender at the RUQ. Positive Murphy's sign. No generalized peritonitis.">RUQ Tenderness (Biliary?)</option>
+                <option value="Suprapubic tenderness on palpation. No flank pain.">Suprapubic Tenderness (Urinary?)</option>
+                <option value="Abdomen is soft. Positive CVA tenderness on the flank. No guarding or rigidity.">Flank / CVA Tenderness (Renal?)</option>
+                <option value="Generalized tenderness with diffuse guarding and rigidity.">Generalized Peritonitis (Acute!)</option>
+            </select>`;
+    } 
+    // 2. Respiratory / Cough
+    else if (caseType === "resp") {
+        hpiHTML = `
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Type of Cough:</label><select id="cough_type"><option value="dry cough">Dry</option><option value="productive cough">Productive</option></select></div>
+            <div class="flex-1"><label class="smart-label">Sputum / Fever:</label><select id="assoc"><option value="with yellowish sputum and subjective fever">Yellow Sputum + Fever</option><option value="with clear sputum, no fever">Clear Sputum / No Fever</option><option value="with shortness of breath">With SOB</option></select></div></div>`;
+        
+        examHTML = `
+            <label>Chest / Resp Exam (Main Finding):</label>
+            <select id="chest_exam">
+                <option value="Chest is clear to auscultation bilaterally. Equal air entry. No wheezes, no crepitations. Patient is not in respiratory distress.">Normal (Clear, equal air entry)</option>
+                <option value="Bilateral expiratory wheezes noted. Prolonged expiratory phase.">Bilateral Wheezing (Asthma/COPD)</option>
+                <option value="Right lower zone focal crepitations/crackles.">Right Lower Zone Crackles (Pneumonia?)</option>
+                <option value="Left lower zone focal crepitations/crackles.">Left Lower Zone Crackles (Pneumonia?)</option>
+                <option value="Upper airway congestion, throat erythema. Lungs are clear.">URTI Signs (Clear Lungs)</option>
+            </select>`;
+    }
+    // 3. Chest Pain
+    else if (caseType === "chest_pain") {
+        hpiHTML = `
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Character:</label><select id="character"><option value="heavy/crushing">Heavy/Crushing</option><option value="sharp/pleuritic">Sharp/Pleuritic</option><option value="atypical">Atypical</option></select></div>
+            <div class="flex-1"><label class="smart-label">Radiation:</label><select id="radiation"><option value="radiating to the left arm/jaw">To Left Arm/Jaw</option><option value="no radiation">None</option></select></div></div>
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Associated:</label><select id="assoc"><option value="associated with diaphoresis and SOB">Diaphoresis & SOB</option><option value="no diaphoresis, no SOB">None</option></select></div></div>`;
+        
+        examHTML = `
+            <label>Cardio-Pulmonary Exam:</label>
+            <select id="chest_exam">
+                <option value="Heart sounds S1+S2 normal, regular rate and rhythm. Chest is clear bilaterally.">Normal (Clear lungs, normal heart)</option>
+                <option value="Chest wall tenderness on palpation (reproducible pain). Clear lungs.">Chest Wall Tenderness (MSK)</option>
+                <option value="Tachycardic, regular rhythm. Clear lungs.">Tachycardia</option>
+            </select>
+            <div class="flex-row" style="margin-top:8px;"><div class="flex-1"><label class="smart-label">ECG:</label><input type="text" id="ecg" value="NSR, No acute ischemic changes"></div>
+            <div class="flex-1"><label class="smart-label">Enzymes:</label><input type="text" id="trop" value="Negative"></div></div>`;
+    }
+    // 4. Limb Trauma
+    else if (caseType === "limb_trauma") {
+        hpiHTML = `
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Mechanism:</label><select id="mech"><option value="fall on outstretched hand (FOOSH)">FOOSH</option><option value="direct trauma">Direct Blow</option><option value="twisting injury">Twisting</option></select></div>
+            <div class="flex-1"><label class="smart-label">Weight Bearing:</label><select id="assoc"><option value="unable to bear weight / use the limb">Unable to use/bear weight</option><option value="able to bear weight">Able to bear weight</option></select></div></div>`;
+        
+        examHTML = `
+            <div class="flex-row"><div class="flex-1"><label>Side/Site:</label><input type="text" id="site" placeholder="e.g. Right Wrist"></div>
+            <div class="flex-1"><label>Neurovascular (NV):</label><select id="nv"><option value="Distal pulses palpable, CRT < 2s, sensation intact.">Intact (Normal)</option><option value="Neurovascular deficit noted.">Deficit</option></select></div></div>
+            <label>Local Findings:</label>
+            <select id="limb_finding">
+                <option value="Mild swelling, tender to palpation. Skin is intact.">Mild Swelling & Tenderness</option>
+                <option value="Significant swelling and ecchymosis. Limited ROM due to pain.">Swelling, Ecchymosis, Limited ROM</option>
+                <option value="Obvious clinical deformity. Joint effusion present.">Obvious Deformity & Effusion</option>
+                <option value="No visible swelling, minimal tenderness, full active ROM.">Normal Appearance (Full ROM)</option>
+            </select>`;
+    }
+    // 5. Head Trauma
+    else if (caseType === "head_trauma") {
+        hpiHTML = `
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Mechanism:</label><input type="text" id="mech" placeholder="e.g. Fall from standing"></div>
+            <div class="flex-1"><label class="smart-label">Concussion Signs (LOC/Vomiting):</label><select id="assoc"><option value="no loss of consciousness, no vomiting">No LOC, No Vomiting</option><option value="positive loss of consciousness">Positive LOC</option><option value="associated with vomiting">Positive Vomiting</option></select></div></div>`;
+        
+        examHTML = `
+            <div class="flex-row"><div class="flex-1"><label>GCS:</label><select id="gcs"><option value="15/15 (Alert & Oriented)">15/15</option><option value="14/15">14/15</option></select></div>
+            <div class="flex-1"><label>Pupils:</label><select id="pupils"><option value="PEARL (Equal & Reactive). No focal neuro deficit.">Normal (PEARL)</option><option value="Unequal/Sluggish">Abnormal</option></select></div></div>
+            <label>Local Head Findings:</label>
+            <select id="head_finding">
+                <option value="No signs of skull fracture. No scalp hematoma.">No External Signs of Trauma</option>
+                <option value="Mild scalp hematoma/contusion. No step-off palpable.">Scalp Hematoma/Contusion</option>
+                <option value="Small scalp laceration. Active bleeding controlled.">Scalp Laceration</option>
+                <option value="Signs of basilar skull fracture noted (e.g. raccoon eyes).">Basilar Skull Fracture Signs</option>
+            </select>`;
+    }
+    // 6. Wound / Laceration
+    else if (caseType === "wound") {
+        hpiHTML = `
+            <div class="flex-row"><div class="flex-1"><label class="smart-label">Mechanism:</label><input type="text" id="mech" placeholder="e.g. Cut by sharp knife"></div>
+            <div class="flex-1"><label class="smart-label">Time since injury:</label><input type="text" id="assoc" placeholder="e.g. 1 hour ago"></div></div>`;
+        
+        examHTML = `
+            <div class="flex-row"><div class="flex-1"><label>Location:</label><input type="text" id="wound_loc" placeholder="e.g. Forehead"></div>
+            <div class="flex-1"><label>Length (cm):</label><input type="text" id="wound_len" placeholder="e.g. 3cm"></div></div>
+            <label>Wound Details:</label>
+            <select id="wound_finding">
+                <option value="Linear, clean edges, superficial.">Clean, Linear, Superficial</option>
+                <option value="Deep laceration involving fascia/muscle.">Deep (Involving Fascia/Muscle)</option>
+                <option value="Ragged edges, contaminated with debris.">Ragged/Contaminated</option>
+            </select>
+            <div class="flex-row" style="margin-top:8px;">
+            <div class="flex-1"><label class="smart-label">Bleeding:</label><select id="bleeding"><option value="Controlled (No active bleeding). Distal NV intact.">Controlled (NV Intact)</option><option value="Active bleeding noted.">Active Bleeding</option></select></div>
+            <div class="flex-1"><label class="smart-label">Closure:</label><select id="closure"><option value="Sutured under local anesthesia">Closed with Sutures</option><option value="Tissue Glue applied">Closed with Glue</option><option value="Dressed only">Dressing Only</option></select></div></div>`;
+    }
+    
+    // الإضافة الجوهرية: حقل "Other" يظهر في كل الحالات
+    examHTML += `<input type="text" id="exam_other" placeholder="➕ Other specific exam findings (e.g. palpable mass, erythema...)" style="margin-top:12px; border: 1px dashed var(--accent);">`;
+    
+    hpiContainer.innerHTML = hpiHTML;
+    examContainer.innerHTML = examHTML;
+}
+
+// --- وظائف مساعدة ---
+function toggleDropdown() { document.getElementById('planItems').classList.toggle('visible'); }
+function updateDropdownText() {
+    const checked = document.querySelectorAll('#planItems input:checked');
+    const anchor = document.querySelector('.dropdown-check-list .anchor');
+    if (checked.length === 0) anchor.innerHTML = 'Select Standard Plan(s)...';
+    else if (checked.length === 1) anchor.innerHTML = checked[0].value;
+    else anchor.innerHTML = checked.length + ' Plans Selected';
+}
+window.onclick = function(event) { if (!event.target.matches('.anchor') && !event.target.closest('.items')) { document.querySelectorAll('.items').forEach(el => el.classList.remove('visible')); } }
+document.getElementById('allergyGroup').addEventListener('change', function(e) {
+    const nkdaCheckbox = document.getElementById('nkda');
+    if(e.target === nkdaCheckbox && nkdaCheckbox.checked) { document.querySelectorAll('#allergyGroup input[type="checkbox"]').forEach(cb => { if(cb !== nkdaCheckbox) cb.checked = false; }); } 
+    else if (e.target !== nkdaCheckbox && e.target.checked) { nkdaCheckbox.checked = false; }
+});
+
+// --- الحفظ والاسترجاع ---
+function saveData() {
+    const data = {
+        ptID: document.getElementById('ptID').value, age: document.getElementById('age').value, gender: document.getElementById('gender').value,
+        ccDuration: document.getElementById('ccDuration').value, hpi_extra: document.getElementById('hpi_extra').value,
+        xray: document.getElementById('xray').value, progression: document.getElementById('progression').value, customPlan: document.getElementById('customPlan').value,
+        pmh: Array.from(document.querySelectorAll('#pmhGroup input:checked')).map(cb => cb.value),
+        allergies: Array.from(document.querySelectorAll('#allergyGroup input:checked')).map(cb => cb.value),
+        plans: Array.from(document.querySelectorAll('#planItems input:checked')).map(cb => cb.value),
+        caseSelect: document.getElementById('caseSelect').value
+    };
+    
+    // إضافة exam_other لقائمة الحفظ
+    const allDynamicIds = ['onset', 'character', 'radiation', 'assoc', 'mech', 'cough_type', 'site', 'limb_finding', 'deformity', 'nv', 'wound_loc', 'wound_len', 'wound_finding', 'bleeding', 'closure', 'abd_exam', 'chest_exam', 'ecg', 'trop', 'gcs', 'pupils', 'head_finding', 'exam_other'];
+    allDynamicIds.forEach(id => { if(document.getElementById(id)) data[id] = document.getElementById(id).value; });
+
+    localStorage.setItem('drnote_er_data', JSON.stringify(data));
+}
+
+function loadData() {
+    const saved = localStorage.getItem('drnote_er_data');
+    if (saved) {
+        const d = JSON.parse(saved);
+        if(d.caseSelect) { document.getElementById('caseSelect').value = d.caseSelect; updateSmartFields(); }
+        ['ptID', 'age', 'gender', 'ccDuration', 'hpi_extra', 'xray', 'progression', 'customPlan'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = d[id] || ""; });
+        
+        if(d.pmh) document.querySelectorAll('#pmhGroup input').forEach(cb => cb.checked = d.pmh.includes(cb.value));
+        if(d.allergies) document.querySelectorAll('#allergyGroup input').forEach(cb => cb.checked = d.allergies.includes(cb.value));
+        if(d.plans) { document.querySelectorAll('#planItems input').forEach(cb => cb.checked = d.plans.includes(cb.value)); updateDropdownText(); }
+
+        const allDynamicIds = ['onset', 'character', 'radiation', 'assoc', 'mech', 'cough_type', 'site', 'limb_finding', 'deformity', 'nv', 'wound_loc', 'wound_len', 'wound_finding', 'bleeding', 'closure', 'abd_exam', 'chest_exam', 'ecg', 'trop', 'gcs', 'pupils', 'head_finding', 'exam_other'];
+        allDynamicIds.forEach(id => { if(d[id] && document.getElementById(id)) document.getElementById(id).value = d[id]; });
+    } else {
+        updateSmartFields();
+    }
+}
+
+// --- توليد النص العبقري مع خيارات الفحص المخصصة ---
+function generateNote() {
+    const d = JSON.parse(localStorage.getItem('drnote_er_data') || '{}');
+    const timeStamp = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const caseType = d.caseSelect;
+    
+    let note = `<strong>Date/Time:</strong> ${timeStamp}\n`;
+    note += `<strong>ID:</strong> ${d.ptID || "N/A"} | <strong>${d.age || "??"}yo ${d.gender || "Male"}</strong>\n`;
+    note += `====================================\n\n`;
+    
+    note += `<strong>[ SUBJECTIVE ]</strong>\n`;
+    const ccMap = { "abdomen": "abdominal pain", "chest_pain": "chest pain", "resp": "cough/SOB", "limb_trauma": "limb trauma", "head_trauma": "head trauma", "wound": "a wound/laceration" };
+    note += `<strong>CC:</strong> Patient presents to ER with ${ccMap[caseType]} of ${d.ccDuration || "unknown"} duration.\n`;
+    
+    let builtHPI = "";
+    if (caseType === "abdomen") builtHPI = `The pain is ${d.onset}, ${d.character} in nature, ${d.radiation}, and is ${d.assoc}.`;
+    else if (caseType === "resp") builtHPI = `Patient complains of a ${d.cough_type}, ${d.assoc}.`;
+    else if (caseType === "chest_pain") builtHPI = `The pain is described as ${d.character}, ${d.radiation}, and is ${d.assoc}.`;
+    else if (caseType === "limb_trauma") builtHPI = `Mechanism of injury: ${d.mech}. Patient is ${d.assoc}.`;
+    else if (caseType === "head_trauma") builtHPI = `Mechanism: ${d.mech}. Patient reports ${d.assoc}.`;
+    else if (caseType === "wound") builtHPI = `Mechanism: ${d.mech}, occurred approximately ${d.assoc}.`;
+    
+    note += `<strong>HPI:</strong> ${builtHPI} ${d.hpi_extra ? d.hpi_extra : ""}\n`;
+    note += `<strong>PMH:</strong> ${d.pmh && d.pmh.length > 0 ? d.pmh.join(', ') : "Unremarkable"} | <strong>Allergies:</strong> ${d.allergies && d.allergies.length > 0 ? d.allergies.join(', ') : "NKDA"}\n\n`;
+
+    note += `<strong>[ OBJECTIVE (FOCUSED EXAM) ]</strong>\n`;
+    
+    if (caseType === "abdomen") note += `- ${d.abd_exam}\n`;
+    else if (caseType === "resp") note += `- ${d.chest_exam}\n`;
+    else if (caseType === "chest_pain") note += `- ${d.chest_exam}\n- <strong>ECG:</strong> ${d.ecg}. <strong>Cardiac Markers:</strong> ${d.trop}.\n`;
+    else if (caseType === "limb_trauma") note += `- <strong>Focus:</strong> ${d.site}. ${d.limb_finding}\n- <strong>NV Status:</strong> ${d.nv}\n`;
+    else if (caseType === "head_trauma") note += `- <strong>GCS:</strong> ${d.gcs}. <strong>Pupils:</strong> ${d.pupils}\n- <strong>Head Exam:</strong> ${d.head_finding}\n`;
+    else if (caseType === "wound") note += `- <strong>Focus:</strong> ${d.wound_loc} (${d.wound_len}). ${d.wound_finding}\n- <strong>Exam:</strong> ${d.bleeding}\n- <strong>Plan:</strong> ${d.closure}\n`;
+    
+    // إضافة الفحص السريري المخصص (Other) إذا تم كتابته
+    if (d.exam_other && d.exam_other.trim() !== "") {
+        note += `- <strong>Additional Findings:</strong> ${d.exam_other}\n`;
+    }
+    
+    note += `\n<strong>[ ER COURSE & INVESTIGATIONS ]</strong>\n`;
+    note += `- <strong>Results:</strong> ${d.xray || "Unremarkable or Pending"}\n`;
+    note += `- <strong>Progression:</strong> ${d.progression || "Stable in ER"}\n\n`;
+
+    note += `<strong>[ PLAN & DISPOSITION ]</strong>\n`;
+    let planIndex = 1;
+    if (d.plans && d.plans.length > 0) { d.plans.forEach(p => { note += `${planIndex}. ${p}\n`; planIndex++; }); }
+    if (d.customPlan && d.customPlan.trim() !== "") { note += `${planIndex}. <strong>Other:</strong> ${d.customPlan}\n`; }
+    if ((!d.plans || d.plans.length === 0) && (!d.customPlan || d.customPlan.trim() === "")) { note += `- Continue Observation\n`; }
+
+    const output = document.getElementById('outputNote');
+    output.innerHTML = note;
+    output.style.display = "block";
+    document.getElementById('copyBtn').style.display = "block";
+}
+
+function copyNote() {
+    const output = document.getElementById('outputNote');
+    const range = document.createRange();
+    range.selectNode(output);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    try {
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        alert("Note copied perfectly! (Patient ID cleared for privacy)");
+        document.getElementById('ptID').value = "";
+        saveData();
+    } catch(err) { alert("Copy formatting not supported on this browser."); }
+}
+
+function clearForm() {
+    if(confirm("Clear all data for the next patient?")) { localStorage.removeItem('drnote_er_data'); location.reload(); }
+}
+
+window.onload = loadData;
+</script>
+</body>
+</html>
